@@ -18,7 +18,9 @@
 
 using namespace std;
 
-uint8_t algorithm = GKV_ORIENTATION_KALMAN_ALGORITHM;
+// uint8_t algorithm = GKV_ORIENTATION_KALMAN_ALGORITHM;
+uint8_t algorithm = GKV_ESKF5_NAVIGATON_ALGORITHM;
+
 
 void CustomDataCallback(const gkv_ros_driver::GkvCustomData::ConstPtr& msg);
 
@@ -72,7 +74,13 @@ int main(int argc, char **argv)
      // DEFINE CLIENT FOR CUSTOM PARAMETERS SETTING
      ros::ServiceClient set_custom_params_client = n.serviceClient<gkv_ros_driver::GkvSetCustomParameters>("gkv_set_custom_params_srv");
      gkv_ros_driver::GkvSetCustomParameters set_custom_params_srv;
-     set_custom_params_srv.request.params={GKV_YAW, GKV_PITCH, GKV_ROLL, GKV_Q0, GKV_Q1, GKV_Q2, GKV_Q3};
+    //  set_custom_params_srv.request.params={GKV_YAW, GKV_PITCH, GKV_ROLL, GKV_Q0, GKV_Q1, GKV_Q2, GKV_Q3};
+     set_custom_params_srv.request.params={GKV_ALG_STATE_STATUS, GKV_GNSS_STATUS, GKV_AX, GKV_AY, GKV_AZ, GKV_WX, GKV_WY, GKV_WZ, GKV_YAW, GKV_PITCH, GKV_ROLL, GKV_Q0, GKV_Q1, GKV_Q2, GKV_Q3,
+     GKV_LAT, GKV_LON, GKV_ALT, GKV_GNSS_VEL, GKV_GNSS_YAW, GKV_VX,GKV_VY,GKV_VZ,
+     GKV_ALG_VAR_X,GKV_ALG_VAR_Y,GKV_ALG_VAR_Z,GKV_ALG_VAR_VX,GKV_ALG_VAR_VY,GKV_ALG_VAR_VZ,
+     GKV_ALG_VAR_PSI,GKV_ALG_VAR_THETA,GKV_ALG_VAR_PHI};
+
+
      set_custom_params_srv.request.quantity_of_params = set_custom_params_srv.request.params.size();
       if (set_custom_params_client.call(set_custom_params_srv))
       {

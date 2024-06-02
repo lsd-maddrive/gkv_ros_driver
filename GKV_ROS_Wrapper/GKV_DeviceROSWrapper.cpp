@@ -64,9 +64,12 @@ GKV_DeviceROSWrapper::GKV_DeviceROSWrapper(ros::NodeHandle *nh, std::string seri
     memset(&(device_id),0,sizeof(device_id));
     memcpy(&(device_id.serial_id),&NoDevStr,sizeof(NoDevStr));
     memcpy(&(device_id.description),&NoDevStr,sizeof(NoDevStr));
+    ROS_INFO("GKV status is %b", GKV_Status);
 
     if (!(GKV_Status))
-    {
+    {   
+        ROS_INFO("set recived packet cb");
+        
         gkv_->SetReceivedPacketCallback(std::bind(&GKV_DeviceROSWrapper::publishReceivedData, this, std::placeholders::_1));
         gkv_->RunDevice();
         if (mode==GKV_ROS_PACKET_MODE)
@@ -256,6 +259,7 @@ bool GKV_DeviceROSWrapper::SetCustomParams(gkv_ros_driver::GkvSetCustomParameter
     {
         memcpy(&device_custom_parameters,&required_custom_parameters,sizeof(required_custom_parameters));
     }
+    MODE = GKV_LMP_PACKET_MODE;
     return res.result;
 }
 
@@ -264,6 +268,7 @@ bool GKV_DeviceROSWrapper::SetCustomParams(gkv_ros_driver::GkvSetCustomParameter
 void GKV_DeviceROSWrapper::SetGKVFabricCustomParams()
 {
     uint8_t params[]={GKV_STATUS,GKV_SAMPLE_COUNTER,GKV_X,GKV_Y,GKV_Z,GKV_Q1,GKV_Q2,GKV_Q3,GKV_Q0};
+    
     uint8_t quantity_of_params;
     quantity_of_params=sizeof(params);
     //check for maximum quantity of parameters
@@ -316,15 +321,19 @@ bool GKV_DeviceROSWrapper::GetID(gkv_ros_driver::GkvGetID::Request  &req,
         }
         gkv_->RequestDeviceID();
         usleep(10000);
-//            ROS_INFO("Device ID Req [%d]",i);
+           ROS_INFO("Device ID Req [%d]",i);
     }
     res.dev_description.data=device_id.description;
     res.dev_id.data=device_id.serial_id;
     if (RequestDevIDFlag==false)
     {
+        ROS_INFO("Return true");
+
         return true;
     }
     else {
+        ROS_INFO("Return false");
+
        RequestDevIDFlag==false;
        return false;
     }
@@ -359,6 +368,10 @@ bool GKV_DeviceROSWrapper::CheckConnection(gkv_ros_driver::GkvCheckConnection::R
 void GKV_DeviceROSWrapper::publishReceivedData(Gyrovert::GKV_PacketBase * buf)
 {
     char str[30];
+    ROS_INFO("pub_recive_data");
+    // ROS_INFO("buf type %s", buf->type);
+
+    // switch (GKV_CUSTOM_PACKET)
     switch (buf->type)
     {
         case GKV_ADC_CODES_PACKET:
@@ -472,11 +485,20 @@ void GKV_DeviceROSWrapper::publishReceivedData(Gyrovert::GKV_PacketBase * buf)
         {
             Gyrovert::GKV_CustomData* packet;
             packet = (Gyrovert::GKV_CustomData*)&buf->data;
+            // ROS_INFO("0, current mode is %s", MODE);
+
+            // MODE = GKV_LMP_PACKET_MODE;
             if (MODE==GKV_LMP_PACKET_MODE)
             {
+              ROS_INFO("1");
+
               gkv_ros_driver::GkvCustomData msg;
               if (CustomParamNumbersReceived)
               {
+                  ROS_INFO("2");
+                  usleep(10000);
+                                  
+
                   msg.quantity_of_params=device_custom_parameters.num;
                   //select parameters that have uint32_t structure
                   for (uint8_t i=0;i<device_custom_parameters.num;i++)
@@ -510,6 +532,8 @@ void GKV_DeviceROSWrapper::publishReceivedData(Gyrovert::GKV_PacketBase * buf)
               }
             }
             else {
+              ROS_INFO("strange msg");
+            
               geometry_msgs::PoseStamped msg;
               msg.pose.position.x=packet->parameter[2];
               msg.pose.position.y=packet->parameter[3];
