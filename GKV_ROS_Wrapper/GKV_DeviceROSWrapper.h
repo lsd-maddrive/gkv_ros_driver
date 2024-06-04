@@ -39,7 +39,7 @@
 #include "ros/ros.h"
 #include <string.h>
 #include <unistd.h>
-#include "GKV_Device.h"
+#include <GKV_Device.h>
 #include <gkv_ros_driver/GkvAdcData.h>
 #include <gkv_ros_driver/GkvSensorsData.h>
 #include <gkv_ros_driver/GkvGyrovertData.h>
