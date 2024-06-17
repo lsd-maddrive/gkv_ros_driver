@@ -3,6 +3,7 @@ import rospy
 from sensor_msgs.msg import Imu, NavSatFix
 from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 navsat_msg = None
 imu_msg = None
@@ -15,7 +16,8 @@ def callback(data):
     navsat_msg = NavSatFix()
     navsat_msg.header.stamp = rospy.Time.now()
     navsat_msg.header.frame_id = 'gkv_gnss_master_link'
-    navsat_msg.status.status = data.param_values[1] # 72
+
+    # navsat_msg.status.status = data.param_values[1] # 72
     navsat_msg.latitude = data.param_values[15] # 69
     navsat_msg.longitude = data.param_values[16] # 70
     navsat_msg.altitude = data.param_values[17] #71
@@ -28,19 +30,39 @@ def callback(data):
     imu_msg = Imu()
     imu_msg.header.stamp = rospy.Time.now()
     imu_msg.header.frame_id = 'gkv_imu_link'
+
+    # quaternion = (
+    #     data.param_values[11], # 39
+    #     data.param_values[12], # 40
+    #     data.param_values[13], # 41
+    #     data.param_values[14] # 42
+    # )
+    # roll, pitch, yaw = euler_from_quaternion(quaternion)
+    # roll_shifted = yaw + 0
+    # pitch_shifted = pitch + 0
+    # yaw_shifted = roll+ 0
+    # q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
+    # imu_msg.orientation.x = q[0]
+    # imu_msg.orientation.y = q[1]
+    # imu_msg.orientation.z = q[2]
+    # imu_msg.orientation.w = q[3]
+
     imu_msg.orientation.x = data.param_values[11] # 39
     imu_msg.orientation.y = data.param_values[12] # 40
     imu_msg.orientation.z = data.param_values[13] # 41
     imu_msg.orientation.w = data.param_values[14] # 42
+
     imu_msg.orientation_covariance = [data.param_values[29], 0, 0, # 104
                                       0, data.param_values[30], 0, # 105
                                       0, 0, data.param_values[31]] # 106
+
     imu_msg.angular_velocity.x = data.param_values[5] # 21
     imu_msg.angular_velocity.y = data.param_values[6] # 22
     imu_msg.angular_velocity.z = data.param_values[7] # 23
     # imu_msg.angular_velocity_covariance = [data.param_values[], 0, 0,
     #                                        0, data.param_values[], 0,
     #                                        0, 0, data.param_values[]]
+
     # imu_msg.linear_acceleration.x = data.param_values[] # 64
     # imu_msg.linear_acceleration.y = data.param_values[] # 65
     # imu_msg.linear_acceleration.z = data.param_values[] # 66
@@ -52,6 +74,7 @@ def callback(data):
     odom_msg = Odometry()
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'gkv_alg_link'
+
     # odom_msg.pose.pose.position.x = data.param_values[] # 43
     # odom_msg.pose.pose.position.y = data.param_values[] # 44
     # odom_msg.pose.pose.position.z = data.param_values[] # 45
@@ -65,6 +88,7 @@ def callback(data):
                                 0, 0, 0, data.param_values[29], 0, 0, # 104
                                 0, 0, 0, 0, data.param_values[30], 0, # 105
                                 0, 0, 0, 0, 0, data.param_values[31]] # 106
+
     odom_msg.twist.twist.linear.x = data.param_values[20] # 46
     odom_msg.twist.twist.linear.y = data.param_values[21] # 47
     odom_msg.twist.twist.linear.z = data.param_values[22] # 48
