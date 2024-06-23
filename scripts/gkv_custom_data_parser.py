@@ -31,26 +31,21 @@ def callback(data):
     imu_msg.header.stamp = rospy.Time.now()
     imu_msg.header.frame_id = 'gkv_imu_link'
 
-    # quaternion = (
-    #     data.param_values[11], # 39
-    #     data.param_values[12], # 40
-    #     data.param_values[13], # 41
-    #     data.param_values[14] # 42
-    # )
-    # roll, pitch, yaw = euler_from_quaternion(quaternion)
-    # roll_shifted = yaw + 0
-    # pitch_shifted = pitch + 0
-    # yaw_shifted = roll+ 0
-    # q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
-    # imu_msg.orientation.x = q[0]
-    # imu_msg.orientation.y = q[1]
-    # imu_msg.orientation.z = q[2]
-    # imu_msg.orientation.w = q[3]
-
-    imu_msg.orientation.x = data.param_values[11] # 39
-    imu_msg.orientation.y = data.param_values[12] # 40
-    imu_msg.orientation.z = data.param_values[13] # 41
-    imu_msg.orientation.w = data.param_values[14] # 42
+    quaternion = (
+        data.param_values[11], # 39
+        data.param_values[12], # 40
+        data.param_values[13], # 41
+        data.param_values[14] # 42
+    )
+    roll, pitch, yaw = euler_from_quaternion(quaternion)
+    roll_shifted = yaw
+    pitch_shifted = pitch
+    yaw_shifted = roll
+    q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
+    imu_msg.orientation.x = q[0]
+    imu_msg.orientation.y = q[1]
+    imu_msg.orientation.z = q[2]
+    imu_msg.orientation.w = q[3]
 
     imu_msg.orientation_covariance = [data.param_values[29], 0, 0, # 104
                                       0, data.param_values[30], 0, # 105
