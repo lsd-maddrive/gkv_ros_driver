@@ -4,9 +4,7 @@
 
 int main(int argc, char **argv)
 {
-    std::string com_port;
-    std::cout << "Set Serial Port:";
-    std::cin >> com_port;
+    std::string com_port = "/dev/tty_GKV-3-0";
     std::cout << "#start connecting to " << com_port << "\n";
     ros::init(argc, argv, "gkv_controller");
     ros::NodeHandle nh;
