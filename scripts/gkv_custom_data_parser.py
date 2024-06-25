@@ -17,13 +17,13 @@ def callback(data):
     navsat_msg.header.stamp = rospy.Time.now()
     navsat_msg.header.frame_id = 'gkv_gnss_master_link'
 
-    # navsat_msg.status.status = data.param_values[1] # 72
-    navsat_msg.latitude = data.param_values[15] # 69
-    navsat_msg.longitude = data.param_values[16] # 70
-    navsat_msg.altitude = data.param_values[17] #71
-    navsat_msg.position_covariance = [0.0141, 0, 0, # 85
-                                      0, 0.0141, 0, # 86
-                                      0, 0, 0.0141] # 87
+    # navsat_msg.status.status = data.param_values[3] # 72
+    navsat_msg.latitude = data.param_values[4] # 69
+    navsat_msg.longitude = data.param_values[5] # 70
+    navsat_msg.altitude = data.param_values[6] #71
+    navsat_msg.position_covariance = [data.param_values[7], 0, 0, # 85
+                                      0, data.param_values[8], 0, # 86
+                                      0, 0, data.param_values[9]] # 87
     navsat_msg.position_covariance_type = 2
 
     # imu msg
@@ -31,71 +31,60 @@ def callback(data):
     imu_msg.header.stamp = rospy.Time.now()
     imu_msg.header.frame_id = 'gkv_imu_link'
 
-    quaternion = (
-        data.param_values[11], # 39
-        data.param_values[12], # 40
-        data.param_values[13], # 41
-        data.param_values[14] # 42
-    )
-    roll, pitch, yaw = euler_from_quaternion(quaternion)
-    roll_shifted = yaw
-    pitch_shifted = pitch
-    yaw_shifted = roll
-    q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
-    imu_msg.orientation.x = q[0]
-    imu_msg.orientation.y = q[1]
-    imu_msg.orientation.z = q[2]
-    imu_msg.orientation.w = q[3]
+    imu_msg.orientation.x = data.param_values[14] # 40
+    imu_msg.orientation.y = data.param_values[15] # 41
+    imu_msg.orientation.z = data.param_values[16] # 42
+    imu_msg.orientation.w = data.param_values[13] # 39
 
-    imu_msg.orientation_covariance = [data.param_values[29], 0, 0, # 104
-                                      0, data.param_values[30], 0, # 105
-                                      0, 0, data.param_values[31]] # 106
+    imu_msg.orientation_covariance = [data.param_values[17], 0, 0, # 106
+                                      0, data.param_values[18], 0, # 105
+                                      0, 0, data.param_values[19]] # 104
 
-    imu_msg.angular_velocity.x = data.param_values[5] # 21
-    imu_msg.angular_velocity.y = data.param_values[6] # 22
-    imu_msg.angular_velocity.z = data.param_values[7] # 23
-    # imu_msg.angular_velocity_covariance = [data.param_values[], 0, 0,
-    #                                        0, data.param_values[], 0,
-    #                                        0, 0, data.param_values[]]
+    imu_msg.angular_velocity.x = data.param_values[20] # 21
+    imu_msg.angular_velocity.y = data.param_values[21] # 22
+    imu_msg.angular_velocity.z = data.param_values[22] # 23
+    imu_msg.angular_velocity_covariance = [0.094, 0, 0,
+                                           0, 0.094, 0,
+                                           0, 0, 0.073]
 
-    # imu_msg.linear_acceleration.x = data.param_values[] # 64
-    # imu_msg.linear_acceleration.y = data.param_values[] # 65
-    # imu_msg.linear_acceleration.z = data.param_values[] # 66
-    # imu_msg.linear_acceleration_covariance = [data.param_values[], 0, 0,
-    #                                           0, data.param_values[], 0,
-    #                                           0, 0, data.param_values[]]
+    imu_msg.linear_acceleration.x = data.param_values[32] # 18 или 49
+    imu_msg.linear_acceleration.y = data.param_values[33] # 19 или 50
+    imu_msg.linear_acceleration.z = data.param_values[34] # 20 или 51
+    imu_msg.linear_acceleration_covariance = [0.009, 0, 0,
+                                              0, 0.009, 0,
+                                              0, 0, 0.0067]
 
     # odom msg
     odom_msg = Odometry()
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'gkv_alg_link'
 
-    # odom_msg.pose.pose.position.x = data.param_values[] # 43
-    # odom_msg.pose.pose.position.y = data.param_values[] # 44
-    # odom_msg.pose.pose.position.z = data.param_values[] # 45
-    odom_msg.pose.pose.orientation.x = data.param_values[11] # 39
-    odom_msg.pose.pose.orientation.y = data.param_values[12] # 40 
-    odom_msg.pose.pose.orientation.z = data.param_values[13] # 41
-    odom_msg.pose.pose.orientation.w = data.param_values[14] # 42
-    odom_msg.pose.covariance = [data.param_values[23], 0, 0, 0, 0, 0, # 98
-                                0, data.param_values[24], 0, 0, 0, 0, # 99
-                                0, 0, data.param_values[25], 0, 0, 0, # 100
-                                0, 0, 0, data.param_values[29], 0, 0, # 104
-                                0, 0, 0, 0, data.param_values[30], 0, # 105
-                                0, 0, 0, 0, 0, data.param_values[31]] # 106
+    odom_msg.pose.pose.position.x = data.param_values[35] # 43
+    odom_msg.pose.pose.position.y = data.param_values[36] # 44
+    odom_msg.pose.pose.position.z = data.param_values[37] # 45
+    odom_msg.pose.pose.orientation.x = data.param_values[14] # 40
+    odom_msg.pose.pose.orientation.y = data.param_values[15] # 41
+    odom_msg.pose.pose.orientation.z = data.param_values[16] # 42
+    odom_msg.pose.pose.orientation.w = data.param_values[13] # 39
+    odom_msg.pose.covariance = [data.param_values[38], 0, 0, 0, 0, 0, # 98
+                                0, data.param_values[39], 0, 0, 0, 0, # 99
+                                0, 0, data.param_values[40], 0, 0, 0, # 100
+                                0, 0, 0, data.param_values[17], 0, 0, # 106
+                                0, 0, 0, 0, data.param_values[18], 0, # 105
+                                0, 0, 0, 0, 0, data.param_values[19]] # 104
 
-    odom_msg.twist.twist.linear.x = data.param_values[20] # 46
-    odom_msg.twist.twist.linear.y = data.param_values[21] # 47
-    odom_msg.twist.twist.linear.z = data.param_values[22] # 48
-    odom_msg.twist.twist.angular.x = data.param_values[5] # 21
-    odom_msg.twist.twist.angular.y = data.param_values[6] # 22
-    odom_msg.twist.twist.angular.z = data.param_values[7] # 23
+    odom_msg.twist.twist.linear.x = data.param_values[23] # 46
+    odom_msg.twist.twist.linear.y = data.param_values[24] # 47
+    odom_msg.twist.twist.linear.z = data.param_values[25] # 48
+    odom_msg.twist.twist.angular.x = data.param_values[20] # 21
+    odom_msg.twist.twist.angular.y = data.param_values[21] # 22
+    odom_msg.twist.twist.angular.z = data.param_values[22] # 23
     odom_msg.twist.covariance = [data.param_values[26], 0, 0, 0, 0, 0, # 101
                                  0, data.param_values[27], 0, 0, 0, 0, # 102
                                  0, 0, data.param_values[28], 0, 0, 0, # 103
-                                 0, 0, 0, data.param_values[5], 0, 0, # 21
-                                 0, 0, 0, 0, data.param_values[6], 0, # 22
-                                 0, 0, 0, 0, 0, data.param_values[7]] # 23
+                                 0, 0, 0, 0.094, 0, 0,
+                                 0, 0, 0, 0, 0.094, 0,
+                                 0, 0, 0, 0, 0, 0.073]
 
 def publish_navsat_msg(_):
     global navsat_msg
