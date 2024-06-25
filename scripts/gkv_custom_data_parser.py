@@ -3,7 +3,6 @@ import rospy
 from sensor_msgs.msg import Imu, NavSatFix
 from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 navsat_msg = None
 imu_msg = None
