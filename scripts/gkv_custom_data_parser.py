@@ -16,7 +16,12 @@ def callback(data):
     navsat_msg.header.stamp = rospy.Time.now()
     navsat_msg.header.frame_id = 'gkv_gnss_master_link'
 
-    # navsat_msg.status.status = data.param_values[3] # 72
+    value = int(data.param_values[3])
+    binary_string = format(value, '032b')
+    inverted_binary_string = ''.join('1' if bit == '0' else '0' for bit in binary_string)
+    bit_17_from_end = int(inverted_binary_string[-18])
+    navsat_msg.status.status = bit_17_from_end
+
     navsat_msg.latitude = data.param_values[4] # 69
     navsat_msg.longitude = data.param_values[5] # 70
     navsat_msg.altitude = data.param_values[6] #71
