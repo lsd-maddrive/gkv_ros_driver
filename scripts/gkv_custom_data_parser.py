@@ -61,7 +61,7 @@ def callback(data):
     # odom msg
     odom_msg = Odometry()
     odom_msg.header.stamp = rospy.Time.now()
-    odom_msg.header.frame_id = 'gkv_alg_link'
+    odom_msg.header.frame_id = 'gkv_odom_link'
 
     odom_msg.pose.pose.position.x = data.param_values[35] # 43
     odom_msg.pose.pose.position.y = data.param_values[36] # 44
