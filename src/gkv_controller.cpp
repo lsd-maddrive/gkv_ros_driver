@@ -19,6 +19,19 @@ int main(int argc, char **argv)
         ROS_ERROR("Failed to connect device");
         return 0;
     }
+    // DEFINE CLIENT FOR PACKET TYPE SETTING
+    ros::ServiceClient set_packet_type_client = nh.serviceClient<gkv_ros_driver::GkvSetPacketType>("gkv_set_packet_type_srv");
+    gkv_ros_driver::GkvSetPacketType set_packet_type_srv;
+    set_packet_type_srv.request.packet_type = 1;
+     if (set_packet_type_client.call(set_packet_type_srv))
+     {
+       ROS_INFO("Packet type changed: %d", (int)set_packet_type_srv.response.result);
+     }
+     else
+     {
+       ROS_ERROR("Failed to set packet type");
+     }
+
     ros::waitForShutdown();
 }
 // %EndTag(FULLTEXT)%
