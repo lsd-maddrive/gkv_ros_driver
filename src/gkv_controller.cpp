@@ -31,6 +31,17 @@ int main(int argc, char **argv)
      {
        ROS_ERROR("Failed to set packet type");
      }
+     // DEFINE CLIENT FOR RESET SERVICE
+    ros::ServiceClient reset_client = nh.serviceClient<gkv_ros_driver::GkvReset>("gkv_reset_srv");
+    gkv_ros_driver::GkvReset reset_srv;
+    if (reset_client.call(reset_srv))
+    {
+            ROS_INFO("Reseted: %d", (int)reset_srv.response.result);
+    }
+    else
+    {
+            ROS_ERROR("Failed to reset device");
+    }
 
     ros::waitForShutdown();
 }
