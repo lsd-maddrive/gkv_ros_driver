@@ -3,6 +3,7 @@ import rospy
 from sensor_msgs.msg import Imu, NavSatFix
 from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 navsat_msg = None
 imu_msg = None
@@ -61,15 +62,31 @@ def callback(data):
     # odom msg
     odom_msg = Odometry()
     odom_msg.header.stamp = rospy.Time.now()
-    odom_msg.header.frame_id = 'gkv_odom_link'
+    odom_msg.header.frame_id = 'odom'
+    odom_msg.child_frame_id = 'base_footprint'
 
-    odom_msg.pose.pose.position.x = data.param_values[35] # 43
-    odom_msg.pose.pose.position.y = data.param_values[36] # 44
-    odom_msg.pose.pose.position.z = data.param_values[37] # 45
-    odom_msg.pose.pose.orientation.x = data.param_values[14] # 40
-    odom_msg.pose.pose.orientation.y = data.param_values[15] # 41
-    odom_msg.pose.pose.orientation.z = data.param_values[16] # 42
-    odom_msg.pose.pose.orientation.w = data.param_values[13] # 39
+    odom_msg.pose.pose.position.x = data.param_values[36] # 43
+    odom_msg.pose.pose.position.y = data.param_values[35] # 44
+    odom_msg.pose.pose.position.z = -data.param_values[37] # 45
+    # odom_msg.pose.pose.orientation.x = data.param_values[14] # 40
+    # odom_msg.pose.pose.orientation.y = data.param_values[15] # 41
+    # odom_msg.pose.pose.orientation.z = data.param_values[16] # 42
+    # odom_msg.pose.pose.orientation.w = data.param_values[13] # 39
+    quaternion = (
+        data.param_values[14], # 39
+        data.param_values[15], # 40
+        data.param_values[16], # 41
+        data.param_values[13] # 42
+    )
+    roll, pitch, yaw = euler_from_quaternion(quaternion)
+    roll_shifted = pitch
+    pitch_shifted = roll
+    yaw_shifted = -yaw
+    q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
+    odom_msg.pose.pose.orientation.x = q[0]
+    odom_msg.pose.pose.orientation.y = q[1]
+    odom_msg.pose.pose.orientation.z = q[2]
+    odom_msg.pose.pose.orientation.w = q[3]
     odom_msg.pose.covariance = [data.param_values[38], 0, 0, 0, 0, 0, # 98
                                 0, data.param_values[39], 0, 0, 0, 0, # 99
                                 0, 0, data.param_values[40], 0, 0, 0, # 100
@@ -77,12 +94,12 @@ def callback(data):
                                 0, 0, 0, 0, data.param_values[18], 0, # 105
                                 0, 0, 0, 0, 0, data.param_values[19]] # 104
 
-    odom_msg.twist.twist.linear.x = data.param_values[23] # 46
-    odom_msg.twist.twist.linear.y = data.param_values[24] # 47
-    odom_msg.twist.twist.linear.z = data.param_values[25] # 48
-    odom_msg.twist.twist.angular.x = data.param_values[20] # 21
-    odom_msg.twist.twist.angular.y = data.param_values[21] # 22
-    odom_msg.twist.twist.angular.z = data.param_values[22] # 23
+    odom_msg.twist.twist.linear.x = data.param_values[24] # 46
+    odom_msg.twist.twist.linear.y = data.param_values[23] # 47
+    odom_msg.twist.twist.linear.z = -data.param_values[25] # 48
+    odom_msg.twist.twist.angular.x = data.param_values[21] # 21
+    odom_msg.twist.twist.angular.y = data.param_values[20] # 22
+    odom_msg.twist.twist.angular.z = -data.param_values[22] # 23
     odom_msg.twist.covariance = [data.param_values[26], 0, 0, 0, 0, 0, # 101
                                  0, data.param_values[27], 0, 0, 0, 0, # 102
                                  0, 0, data.param_values[28], 0, 0, 0, # 103
