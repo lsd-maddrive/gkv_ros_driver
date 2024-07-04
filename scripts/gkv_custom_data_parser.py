@@ -62,14 +62,14 @@ def imu_callback(data):
 
     imu_msg.angular_velocity.x = data.param_values[21] # 21
     imu_msg.angular_velocity.y = data.param_values[20] # 22
-    imu_msg.angular_velocity.z = data.param_values[22] # 23
+    imu_msg.angular_velocity.z = -data.param_values[22] # 23
     imu_msg.angular_velocity_covariance = [0.094, 0, 0,
                                            0, 0.094, 0,
                                            0, 0, 0.073]
 
     imu_msg.linear_acceleration.x = data.param_values[33] # 18 или 49
     imu_msg.linear_acceleration.y = data.param_values[32] # 19 или 50
-    imu_msg.linear_acceleration.z = data.param_values[34] # 20 или 51
+    imu_msg.linear_acceleration.z = -data.param_values[34] # 20 или 51
     imu_msg.linear_acceleration_covariance = [0.009, 0, 0,
                                               0, 0.009, 0,
                                               0, 0, 0.0067]
