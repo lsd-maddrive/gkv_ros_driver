@@ -5,14 +5,11 @@ from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-navsat_msg = None
-imu_msg = None
-odom_msg = None
+pub_navsat = None
+pub_imu = None
+pub_odom = None
 
-def callback(data):
-    global navsat_msg, imu_msg, odom_msg
-
-    # navsat fix msg
+def navsat_callback(data):
     navsat_msg = NavSatFix()
     navsat_msg.header.stamp = rospy.Time.now()
     navsat_msg.header.frame_id = 'gkv_gnss_master_link'
@@ -31,7 +28,9 @@ def callback(data):
                                       0, 0, data.param_values[9]] # 87
     navsat_msg.position_covariance_type = 2
 
-    # imu msg
+    pub_navsat.publish(navsat_msg)
+
+def imu_callback(data):
     imu_msg = Imu()
     imu_msg.header.stamp = rospy.Time.now()
     imu_msg.header.frame_id = 'gkv_imu_link'
@@ -75,7 +74,9 @@ def callback(data):
                                               0, 0.009, 0,
                                               0, 0, 0.0067]
 
-    # odom msg
+    pub_imu.publish(imu_msg)
+
+def odom_callback(data):
     odom_msg = Odometry()
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'odom'
@@ -125,32 +126,18 @@ def callback(data):
                                  0, 0, 0, 0, 0.094, 0,
                                  0, 0, 0, 0, 0, 0.073]
 
-def publish_navsat_msg(_):
-    global navsat_msg
-    if navsat_msg:
-        pub_navsat.publish(navsat_msg)
-
-def publish_imu_msg(_):
-    global imu_msg
-    if imu_msg:
-        pub_imu.publish(imu_msg)
-
-def publish_odom_msg(_):
-    global odom_msg
-    if odom_msg:
-        pub_odom.publish(odom_msg)
+    pub_odom.publish(odom_msg)
 
 def listener():
     rospy.init_node('gkv_parser', anonymous=True)
-    rospy.Subscriber('gkv_custom_data', GkvCustomData, callback)
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, navsat_callback, queue_size=1)
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
+
     global pub_navsat, pub_imu, pub_odom
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
-
-    rospy.Timer(rospy.Duration(0.2), publish_navsat_msg) # 5 Гц
-    rospy.Timer(rospy.Duration(0.01), publish_imu_msg)   # 100 Гц
-    rospy.Timer(rospy.Duration(0.02), publish_odom_msg)   # 50 Гц
 
     rospy.spin()
 
