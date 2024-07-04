@@ -9,6 +9,11 @@ pub_navsat = None
 pub_imu = None
 pub_odom = None
 
+# Publish frequency parameters
+navsat_freq = None
+imu_freq = None
+odom_freq = None
+
 def navsat_callback(data):
     navsat_msg = NavSatFix()
     navsat_msg.header.stamp = rospy.Time.now()
@@ -22,7 +27,7 @@ def navsat_callback(data):
 
     navsat_msg.latitude = data.param_values[4] # 69
     navsat_msg.longitude = data.param_values[5] # 70
-    navsat_msg.altitude = data.param_values[6] #71
+    navsat_msg.altitude = data.param_values[6] # 71
     navsat_msg.position_covariance = [data.param_values[7], 0, 0, # 85
                                       0, data.param_values[8], 0, # 86
                                       0, 0, data.param_values[9]] # 87
@@ -128,16 +133,29 @@ def odom_callback(data):
 
     pub_odom.publish(odom_msg)
 
+def setup_timers():
+    global navsat_freq, imu_freq, odom_freq
+    navsat_freq = rospy.get_param('~navsat_freq', 10.0)  # Default frequency is 10 Hz
+    imu_freq = rospy.get_param('~imu_freq', 100.0)  # Default frequency is 100 Hz
+    odom_freq = rospy.get_param('~odom_freq', 50.0)  # Default frequency is 50 Hz
+
+    rospy.Timer(rospy.Duration(1.0 / navsat_freq), lambda event: pub_navsat.publish(navsat_msg))
+    rospy.Timer(rospy.Duration(1.0 / imu_freq), lambda event: pub_imu.publish(imu_msg))
+    rospy.Timer(rospy.Duration(1.0 / odom_freq), lambda event: pub_odom.publish(odom_msg))
+
 def listener():
     rospy.init_node('gkv_parser', anonymous=True)
-    rospy.Subscriber('gkv_custom_data', GkvCustomData, navsat_callback, queue_size=1)
-    rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
-    rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
 
     global pub_navsat, pub_imu, pub_odom
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
+
+    setup_timers()
+
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, navsat_callback, queue_size=1)
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
+    rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
 
     rospy.spin()
 
