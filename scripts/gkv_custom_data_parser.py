@@ -158,7 +158,7 @@ def listener():
 
     rospy.Timer(rospy.Duration(0.1), publish_navsat) # 10 Гц
     rospy.Timer(rospy.Duration(0.01), publish_imu) # 100 Гц
-    rospy.Timer(rospy.Duration(0.02), publish_odom) # 50 Гц
+    rospy.Timer(rospy.Duration(0.05), publish_odom) # 20 Гц
 
     rospy.spin()
 
