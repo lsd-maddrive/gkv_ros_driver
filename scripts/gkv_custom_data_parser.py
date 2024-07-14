@@ -44,13 +44,11 @@ def imu_callback(data):
         data.param_values[13] # 42
     )
     roll, pitch, yaw = euler_from_quaternion(quaternion)
+    # enu to ned
     roll_shifted = pitch
     pitch_shifted = roll
     yaw_shifted = -yaw
-    # roll
-    # roll_shifted_twise = roll_shifted + 3.1415926535
-    # pitch_shifted_twise = pitch_shifted
-    # yaw_shifted_twise = yaw_shifted + 1.570796327
+
     q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
     imu_msg.orientation.x = q[0]
     imu_msg.orientation.y = q[1]
@@ -105,10 +103,7 @@ def odom_callback(data):
     roll_shifted = pitch
     pitch_shifted = roll
     yaw_shifted = -yaw
-    # roll
-    # roll_shifted_twise = roll_shifted + 3.1415926535
-    # pitch_shifted_twise = pitch_shifted
-    # yaw_shifted_twise = yaw_shifted - 1.570796327
+
     q = quaternion_from_euler(roll_shifted, pitch_shifted, yaw_shifted)
     if q[0] == 0:
         print(q)
