@@ -96,8 +96,8 @@ def odom_callback(data):
     ned_yaw = -enu_yaw
 
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
-    if q[0] == 0:
-        print(q)
+    if ned_q[0] == 0:
+        print(ned_q)
     odom_msg.pose.pose.orientation.x = ned_q[0]
     odom_msg.pose.pose.orientation.y = ned_q[1]
     odom_msg.pose.pose.orientation.z = ned_q[2]
