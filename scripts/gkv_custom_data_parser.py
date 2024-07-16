@@ -13,6 +13,8 @@ navsat_msg = NavSatFix()
 imu_msg = Imu()
 odom_msg = Odometry()
 
+is_ready = False
+
 def navsat_callback(data):
     global navsat_msg
     navsat_msg.header.stamp = rospy.Time.now()
@@ -33,7 +35,7 @@ def navsat_callback(data):
     navsat_msg.position_covariance_type = 2
 
 def imu_callback(data):
-    global imu_msg
+    global imu_msg, is_ready
     imu_msg.header.stamp = rospy.Time.now()
     imu_msg.header.frame_id = 'gkv_imu_link'
 
@@ -50,6 +52,13 @@ def imu_callback(data):
     ned_yaw = -enu_yaw
 
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
+    if ned_q[0] == 0 and ned_q[1] == 0 and ned_q[2] == 0 and ned_q[3] == 1:
+        return
+    
+    if not is_ready:
+        rospy.loginfo("GKV is ready!")
+        is_ready = True
+
     imu_msg.orientation.x = ned_q[0]
     imu_msg.orientation.y = ned_q[1]
     imu_msg.orientation.z = ned_q[2]
@@ -74,7 +83,7 @@ def imu_callback(data):
                                               0, 0, 0.0067]
 
 def odom_callback(data):
-    global odom_msg
+    global odom_msg, is_ready
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'odom'
     odom_msg.child_frame_id = 'base_footprint'
@@ -96,8 +105,13 @@ def odom_callback(data):
     ned_yaw = -enu_yaw
 
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
-    if ned_q[0] == 0:
-        print(ned_q)
+    if ned_q[0] == 0 and ned_q[1] == 0 and ned_q[2] == 0 and ned_q[3] == 1:
+        return
+    
+    if not is_ready:
+        rospy.loginfo("GKV is ready!")
+        is_ready = True
+
     odom_msg.pose.pose.orientation.x = ned_q[0]
     odom_msg.pose.pose.orientation.y = ned_q[1]
     odom_msg.pose.pose.orientation.z = ned_q[2]
