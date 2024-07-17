@@ -137,13 +137,16 @@ def odom_callback(data):
                                  0, 0, 0, 0, 0, 0.073]
 
 def publish_navsat(_):
-    pub_navsat.publish(navsat_msg)
+    if is_ready:
+        pub_navsat.publish(navsat_msg)
 
 def publish_imu(_):
-    pub_imu.publish(imu_msg)
+    if is_ready:
+        pub_imu.publish(imu_msg)
 
 def publish_odom(_):
-    pub_odom.publish(odom_msg)
+    if is_ready:
+        pub_odom.publish(odom_msg)
 
 def listener():
     rospy.init_node('gkv_parser', anonymous=True)
