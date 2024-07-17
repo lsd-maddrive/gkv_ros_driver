@@ -137,8 +137,7 @@ def odom_callback(data):
                                  0, 0, 0, 0, 0, 0.073]
 
 def publish_navsat(_):
-    if is_ready:
-        pub_navsat.publish(navsat_msg)
+    pub_navsat.publish(navsat_msg)
 
 def publish_imu(_):
     if is_ready:
