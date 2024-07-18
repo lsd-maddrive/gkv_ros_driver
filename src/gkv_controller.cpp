@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-    std::string com_port = "/dev/ttyGKV-3";
+    std::string com_port = "/dev/ttyGKV-3-main";
     std::cout << "#start connecting to " << com_port << "\n";
     ros::init(argc, argv, "gkv_controller");
     ros::NodeHandle nh;
