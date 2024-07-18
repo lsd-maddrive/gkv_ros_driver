@@ -8,12 +8,10 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 pub_navsat = None
 pub_imu = None
 pub_odom = None
-pub_geo_odom = None
 
 navsat_msg = NavSatFix()
 imu_msg = Imu()
 odom_msg = Odometry()
-geo_odom_msg = Odometry()
 
 is_ready = False
 
@@ -92,8 +90,8 @@ def odom_callback(data):
 
     odom_msg.pose.pose.position.x = data.param_values[36] # 44 y (alg)
     odom_msg.pose.pose.position.y = data.param_values[35] # 43 x (alg)
-    odom_msg.pose.pose.position.z = 0
     # odom_msg.pose.pose.position.z = -data.param_values[37] # 45 z (alg)
+    odom_msg.pose.pose.position.z = 0
     enu_quaternion = (
         data.param_values[14], # 40 q1 (alg)
         data.param_values[15], # 41 q2 (alg)
@@ -138,57 +136,6 @@ def odom_callback(data):
                                  0, 0, 0, 0, 0.094, 0,
                                  0, 0, 0, 0, 0, 0.073]
 
-def geo_odom_callback(data):
-    global geo_odom_msg, is_ready
-    geo_odom_msg.header.stamp = rospy.Time.now()
-
-    geo_odom_msg.pose.pose.position.x = data.param_values[4] # 69 gnss_latitude (gnss)
-    geo_odom_msg.pose.pose.position.y = data.param_values[5] # 70 gnss_longitude (gnss)
-    geo_odom_msg.pose.pose.position.z = data.param_values[6] # 71 gnss_altitude (gnss)
-    enu_quaternion = (
-        data.param_values[14], # 40 q1 (alg)
-        data.param_values[15], # 41 q2 (alg)
-        data.param_values[16], # 42 q3 (alg)
-        data.param_values[13] # 39 q0 (alg)
-    )
-    enu_roll, enu_pitch, enu_yaw = euler_from_quaternion(enu_quaternion)
-    # enu to ned
-    ned_roll = enu_pitch
-    ned_pitch = enu_roll
-    ned_yaw = -enu_yaw
-
-    ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
-    if ned_q[0] == 0 and ned_q[1] == 0 and ned_q[2] == 0 and ned_q[3] == 1:
-        return
-    
-    if not is_ready:
-        rospy.loginfo("GKV is ready!")
-        is_ready = True
-
-    geo_odom_msg.pose.pose.orientation.x = ned_q[0]
-    geo_odom_msg.pose.pose.orientation.y = ned_q[1]
-    geo_odom_msg.pose.pose.orientation.z = ned_q[2]
-    geo_odom_msg.pose.pose.orientation.w = ned_q[3]
-    geo_odom_msg.pose.covariance = [data.param_values[7], 0, 0, 0, 0, 0, # 85 gnss_sig_lat (gnss)
-                                0, data.param_values[8], 0, 0, 0, 0, # 86 gnss_sig_lon (gnss)
-                                0, 0, data.param_values[9], 0, 0, 0, # 87 gnss_sig_alt (gnss)
-                                0, 0, 0, data.param_values[18], 0, 0, # 105 alg_var_theta (pitch) (alg)
-                                0, 0, 0, 0, data.param_values[17], 0, # 106 alg_var_phi (roll) (alg)
-                                0, 0, 0, 0, 0, data.param_values[19]] # 104 alg_var_psi (yaw) (alg)
-
-    geo_odom_msg.twist.twist.linear.x = data.param_values[24] # 47 vy (alg)
-    geo_odom_msg.twist.twist.linear.y = data.param_values[23] # 46 vx (alg)
-    geo_odom_msg.twist.twist.linear.z = -data.param_values[25] # 48 vz (alg)
-    geo_odom_msg.twist.twist.angular.x = data.param_values[21] # 22 wy (sensor)
-    geo_odom_msg.twist.twist.angular.y = data.param_values[20] # 21 wx (sensor)
-    geo_odom_msg.twist.twist.angular.z = -data.param_values[22] # 23 wz (sensor)
-    geo_odom_msg.twist.covariance = [data.param_values[27], 0, 0, 0, 0, 0, # 102 alg_var_vy (alg)
-                                 0, data.param_values[26], 0, 0, 0, 0, # 101 alg_var_vx (alg)
-                                 0, 0, data.param_values[28], 0, 0, 0, # 103 alg_var_vz (alg)
-                                 0, 0, 0, 0.094, 0, 0,
-                                 0, 0, 0, 0, 0.094, 0,
-                                 0, 0, 0, 0, 0, 0.073]
-
 def publish_navsat(_):
     pub_navsat.publish(navsat_msg)
 
@@ -200,27 +147,20 @@ def publish_odom(_):
     if is_ready:
         pub_odom.publish(odom_msg)
 
-def publish_geo_odom(_):
-    if is_ready:
-        pub_geo_odom.publish(geo_odom_msg)
-
 def listener():
     rospy.init_node('gkv_parser', anonymous=True)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, navsat_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
-    rospy.Subscriber('gkv_custom_data', GkvCustomData, geo_odom_callback, queue_size=1)
 
     global pub_navsat, pub_imu, pub_odom, pub_geo_odom
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
-    pub_geo_odom = rospy.Publisher('gkv/geo_odom', Odometry, queue_size=10)
 
     rospy.Timer(rospy.Duration(0.1), publish_navsat) # 10 Гц
     rospy.Timer(rospy.Duration(0.01), publish_imu) # 100 Гц
     rospy.Timer(rospy.Duration(0.05), publish_odom) # 20 Гц
-    rospy.Timer(rospy.Duration(0.05), publish_geo_odom) # 20 Гц
 
     rospy.spin()
 
