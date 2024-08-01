@@ -153,7 +153,7 @@ def listener():
     rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
 
-    global pub_navsat, pub_imu, pub_odom, pub_geo_odom
+    global pub_navsat, pub_imu, pub_odom
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
