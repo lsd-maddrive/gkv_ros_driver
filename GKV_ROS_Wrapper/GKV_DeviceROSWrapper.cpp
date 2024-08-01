@@ -580,6 +580,17 @@ void GKV_DeviceROSWrapper::publishReceivedData(Gyrovert::GKV_PacketBase * buf)
                           msg.param_values.push_back(packet->parameter[i]);
                       }
                   }
+                //   std::cout << (*((int32_t *)&packet->parameter[35])) * 6.28 << "\n";
+                //   std::cout << std::format("The answer is {}.\n", (*((int32_t *)&packet->parameter[35])) * 6.28);
+                //   printf ("%d\n", (*((int32_t *)&packet->parameter[35])));
+                  // printf ("original packet is %d\n", (*((int32_t *)&packet->parameter[35])));
+                  // printf ("cast to float %f\n", _Float64(*((int32_t *)&packet->parameter[35])));
+
+                //   printf ("msg is %d\n", msg.param_values[35]);
+                  // printf("cast to int:\n");
+                  // msg.param_values[35] = _Float64(*((int32_t *)&packet->parameter[35]));
+                  // msg.param_values[36] = _Float64(*((int32_t *)&packet->parameter[36]));
+                  // ROS_INFO_STREAM(msg.param_values[35]);
                   received_custom_data_publisher.publish(msg);
               }
               else
