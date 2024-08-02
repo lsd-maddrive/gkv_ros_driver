@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import math
 from sensor_msgs.msg import Imu, NavSatFix
 from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
@@ -26,9 +27,13 @@ def navsat_callback(data):
     bit_17_from_end = int(inverted_binary_string[-18])
     navsat_msg.status.status = bit_17_from_end
 
-    navsat_msg.latitude = data.param_values[4] # 69 gnss_latitude (gnss)
-    navsat_msg.longitude = data.param_values[5] # 70 gnss_longitude (gnss)
-    navsat_msg.altitude = data.param_values[6] # 71 gnss_altitude (gnss)
+    alg_lat = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) * (180 / 3.14159265359) # 91 alg_int_lat (alg)
+    alg_lon = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) * (180 / 3.14159265359) # 92 alg_int_lon (alg)
+    alg_alt = data.param_values[37] # 93 alg_alt (alg)
+
+    navsat_msg.latitude = alg_lat
+    navsat_msg.longitude = alg_lon
+    navsat_msg.altitude = alg_alt
     navsat_msg.position_covariance = [data.param_values[7], 0, 0, # 85 gnss_sig_lat (gnss)
                                       0, data.param_values[8], 0, # 86 gnss_sig_lon (gnss)
                                       0, 0, data.param_values[9]] # 87 gnss_sig_alt (gnss)
@@ -88,9 +93,18 @@ def odom_callback(data):
     odom_msg.header.frame_id = 'odom'
     odom_msg.child_frame_id = 'base_footprint'
 
-    odom_msg.pose.pose.position.x = data.param_values[36] # 44 y (alg)
-    odom_msg.pose.pose.position.y = data.param_values[35] # 43 x (alg)
-    # odom_msg.pose.pose.position.z = -data.param_values[37] # 45 z (alg)
+    R = 6371.1e3
+
+    x_gnss_rad = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) # 92 alg_int_lon (alg)
+    print(x_gnss_rad)
+    x = R * x_gnss_rad * math.cos(x_gnss_rad) - 2910387.9444
+
+    y_gnss_rad = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) # 91 alg_int_lat (alg)
+    y = R * y_gnss_rad - 6668542.5669
+
+    odom_msg.pose.pose.position.x = x
+    odom_msg.pose.pose.position.y = y
+    # odom_msg.pose.pose.position.z = - data.param_values[37]
     odom_msg.pose.pose.position.z = 0
     enu_quaternion = (
         data.param_values[14], # 40 q1 (alg)
