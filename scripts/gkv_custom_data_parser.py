@@ -96,7 +96,6 @@ def odom_callback(data):
     R = 6371.1e3
 
     x_gnss_rad = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) # 92 alg_int_lon (alg)
-    print(x_gnss_rad)
     x = R * x_gnss_rad * math.cos(x_gnss_rad) - 2910387.9444
 
     y_gnss_rad = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) # 91 alg_int_lat (alg)
