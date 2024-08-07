@@ -14,7 +14,11 @@ navsat_msg = NavSatFix()
 imu_msg = Imu()
 odom_msg = Odometry()
 
+# flag if GKV algo is stage 50
 is_ready = False
+
+initial_x = None
+initial_y = None
 
 def navsat_callback(data):
     global navsat_msg
@@ -88,7 +92,7 @@ def imu_callback(data):
                                               0, 0, 0.0067]
 
 def odom_callback(data):
-    global odom_msg, is_ready
+    global odom_msg, is_ready, initial_x, initial_y
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'odom'
     odom_msg.child_frame_id = 'base_footprint'
@@ -96,13 +100,17 @@ def odom_callback(data):
     R = 6371.1e3
 
     x_gnss_rad = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) # 92 alg_int_lon (alg)
-    x = R * x_gnss_rad * math.cos(x_gnss_rad) - 2910387.9444
+    x = R * x_gnss_rad * math.cos(x_gnss_rad)
 
     y_gnss_rad = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) # 91 alg_int_lat (alg)
-    y = R * y_gnss_rad - 6668542.5669
+    y = R * y_gnss_rad
 
-    odom_msg.pose.pose.position.x = x
-    odom_msg.pose.pose.position.y = y
+    if initial_x is None and initial_y is None:
+        initial_x = x
+        initial_y = y
+
+    odom_msg.pose.pose.position.x = x - initial_x
+    odom_msg.pose.pose.position.y = y - initial_y
     # odom_msg.pose.pose.position.z = - data.param_values[37]
     odom_msg.pose.pose.position.z = 0
     enu_quaternion = (
