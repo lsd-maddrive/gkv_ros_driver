@@ -99,12 +99,18 @@ def odom_callback(data):
     odom_msg.child_frame_id = 'base_footprint'
 
     R = 6371100
-    x_gnss_rad = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) # 92 alg_int_lon (alg)
-    y_gnss_rad = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) # 91 alg_int_lat (alg)
+    x_gnss_rad = data.param_values[36] * (2 * math.pi / 2 ** 32) # 92 alg_int_lon (alg)
+    y_gnss_rad = data.param_values[35] * (2 * math.pi / 2 ** 32) # 91 alg_int_lat (alg)
 
     # print('FIRST COORDINATE %f , %f', x_gnss_rad, y_gnss_rad)
-    x = Decimal(R * (Decimal(x_gnss_rad)  - Decimal(0.9075578209804409)) * Decimal(math.cos(Decimal(0.9075570924472374))))
-    y = Decimal(R * (Decimal(y_gnss_rad) - Decimal(0.9742314564449841)))
+    X_GNSS_INIT = 0.9075934708311145
+    Y_GNSS_INIT = 0.9742340355695578
+    X_GNSS_INIT_COS = Decimal(math.cos(Decimal(Y_GNSS_INIT))) 
+
+    x = Decimal(R * (Decimal(x_gnss_rad) - Decimal(X_GNSS_INIT)) * X_GNSS_INIT_COS) * Decimal(1.0)
+    # Decimal(0.9309686727)
+    y = Decimal(R * (Decimal(y_gnss_rad) - Decimal(Y_GNSS_INIT))) * Decimal(1.0)
+    # Decimal(1.0171345)
     # print('My new y %f in radians is %f new y is %f odometry value is %f', data.param_values[3], y_gnss_rad, R * (y_gnss_rad ) , y)
     pose_stamped = PoseStamped()
     pose_stamped.header.stamp = rospy.Time.now()
@@ -129,8 +135,10 @@ def odom_callback(data):
     )
     enu_roll, enu_pitch, enu_yaw = euler_from_quaternion(enu_quaternion)
     # enu to ned
-    ned_roll = enu_pitch
-    ned_pitch = enu_roll
+    ned_roll = 0
+    ned_pitch = 0
+    # ned_roll = enu_pitch
+    # ned_pitch = enu_roll
     ned_yaw = -enu_yaw
 
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
