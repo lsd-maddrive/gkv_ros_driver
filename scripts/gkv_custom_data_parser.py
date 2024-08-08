@@ -5,10 +5,15 @@ from sensor_msgs.msg import Imu, NavSatFix
 from gkv_ros_driver.msg import GkvCustomData
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from decimal import Decimal
+import tf
+from geometry_msgs.msg import  PoseStamped
+
 
 pub_navsat = None
 pub_imu = None
 pub_odom = None
+pub = None
 
 navsat_msg = NavSatFix()
 imu_msg = Imu()
@@ -93,16 +98,27 @@ def odom_callback(data):
     odom_msg.header.frame_id = 'odom'
     odom_msg.child_frame_id = 'base_footprint'
 
-    R = 6371.1e3
-
+    R = 6371100
     x_gnss_rad = data.param_values[36] * (2 * 3.14159265359 / 2 ** 32) # 92 alg_int_lon (alg)
-    x = R * x_gnss_rad * math.cos(x_gnss_rad) - 2910387.9444
-
     y_gnss_rad = data.param_values[35] * (2 * 3.14159265359 / 2 ** 32) # 91 alg_int_lat (alg)
-    y = R * y_gnss_rad - 6668542.5669
 
+    # print('FIRST COORDINATE %f , %f', x_gnss_rad, y_gnss_rad)
+    x = Decimal(R * (Decimal(x_gnss_rad)  - Decimal(0.9075578209804409)) * Decimal(math.cos(Decimal(0.9075570924472374))))
+    y = Decimal(R * (Decimal(y_gnss_rad) - Decimal(0.9742314564449841)))
+    # print('My new y %f in radians is %f new y is %f odometry value is %f', data.param_values[3], y_gnss_rad, R * (y_gnss_rad ) , y)
+    pose_stamped = PoseStamped()
+    pose_stamped.header.stamp = rospy.Time.now()
+    pose_stamped.header.frame_id = "odom"
+    pose_stamped.pose.position.x = x
+    pose_stamped.pose.position.y = y
+    pose_stamped.pose.position.z = 0.0
+    pose_stamped.pose.orientation.w = 1.0
+
+    rospy.logdebug("Publishing PoseStamped message: %s", pose_stamped)
+                     
     odom_msg.pose.pose.position.x = x
     odom_msg.pose.pose.position.y = y
+
     # odom_msg.pose.pose.position.z = - data.param_values[37]
     odom_msg.pose.pose.position.z = 0
     enu_quaternion = (
@@ -120,6 +136,10 @@ def odom_callback(data):
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
     if ned_q[0] == 0 and ned_q[1] == 0 and ned_q[2] == 0 and ned_q[3] == 1:
         return
+    
+    tf_broadcaster = tf.TransformBroadcaster()
+    tf_broadcaster.sendTransform((x, y, 0.0), (ned_q[0], ned_q[1], ned_q[2], ned_q[3]), rospy.Time.now(), "base_footprint", "odom")
+    pub.publish(pose_stamped)
     
     if not is_ready:
         rospy.loginfo("GKV is ready!")
@@ -166,10 +186,11 @@ def listener():
     rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
 
-    global pub_navsat, pub_imu, pub_odom
+    global pub_navsat, pub_imu, pub_odom, pub
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
+    pub = rospy.Publisher('/gps_transformation', PoseStamped, queue_size=10)
 
     rospy.Timer(rospy.Duration(0.1), publish_navsat) # 10 Гц
     rospy.Timer(rospy.Duration(0.01), publish_imu) # 100 Гц
