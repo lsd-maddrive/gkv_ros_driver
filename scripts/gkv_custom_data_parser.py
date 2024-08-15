@@ -189,7 +189,7 @@ def publish_odom(_):
         pub_odom.publish(odom_msg)
 
 def listener():
-    rospy.init_node('gkv_parser', anonymous=True)
+    rospy.init_node('gkv_parser', anonymous=False)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, navsat_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, imu_callback, queue_size=1)
     rospy.Subscriber('gkv_custom_data', GkvCustomData, odom_callback, queue_size=1)
