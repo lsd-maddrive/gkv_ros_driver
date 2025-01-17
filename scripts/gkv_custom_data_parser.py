@@ -98,8 +98,10 @@ def imu_callback(data):
 
 def odom_callback(data):
     global odom_msg, is_ready, initial_x, initial_y
+
     odom_msg.header.stamp = rospy.Time.now()
     odom_msg.header.frame_id = 'odom'
+
     odom_msg.child_frame_id = 'base_footprint'
 
     R = 6371100
@@ -107,30 +109,34 @@ def odom_callback(data):
     y_gnss_rad = data.param_values[35] * (2 * math.pi / 2 ** 32) # 91 alg_int_lat (alg)
 
     # print('FIRST COORDINATE %f , %f', x_gnss_rad, y_gnss_rad)
-    X_GNSS_INIT = 0.9075934708311145
-    Y_GNSS_INIT = 0.9742340355695578
+    X_GNSS_INIT = 0.9075741764045073
+    Y_GNSS_INIT = 0.9742335103819032
+    # AZIMUTH_INIT = -1.54768047862242
     X_GNSS_INIT_COS = Decimal(math.cos(Decimal(Y_GNSS_INIT))) 
 
-    x = Decimal(R * (Decimal(x_gnss_rad) - Decimal(X_GNSS_INIT)) * X_GNSS_INIT_COS) * Decimal(1.0)
+    x_ned = Decimal(R * (Decimal(x_gnss_rad) - Decimal(X_GNSS_INIT)) * X_GNSS_INIT_COS) * Decimal(1.0)
     # Decimal(0.9309686727)
-    y = Decimal(R * (Decimal(y_gnss_rad) - Decimal(Y_GNSS_INIT))) * Decimal(1.0)
+    y_ned = Decimal(R * (Decimal(y_gnss_rad) - Decimal(Y_GNSS_INIT))) * Decimal(1.0)
     # Decimal(1.0171345)
     # print('My new y %f in radians is %f new y is %f odometry value is %f', data.param_values[3], y_gnss_rad, R * (y_gnss_rad ) , y)
-    pose_stamped = PoseStamped()
-    pose_stamped.header.stamp = rospy.Time.now()
-    pose_stamped.header.frame_id = "odom"
-    pose_stamped.pose.position.x = x
-    pose_stamped.pose.position.y = y
-    pose_stamped.pose.position.z = 0.0
-    pose_stamped.pose.orientation.w = 1.0
+    # pose_stamped = PoseStamped()
+    # pose_stamped.header.stamp = rospy.Time.now()
+    # pose_stamped.header.frame_id = "odom"
+    # pose_stamped.pose.position.x = x
+    # pose_stamped.pose.position.y = y
+    # pose_stamped.pose.position.z = 0.0
+    # pose_stamped.pose.orientation.w = 1.0
 
-    rospy.logdebug("Publishing PoseStamped message: %s", pose_stamped)
-                     
-    odom_msg.pose.pose.position.x = x
-    odom_msg.pose.pose.position.y = y
+    # rospy.logdebug("Publishing PoseStamped message: %s", pose_stamped)
+
+    odom_msg.pose.pose.position.x = x_ned
+    odom_msg.pose.pose.position.y = y_ned
+    # odom_msg.pose.pose.position.x = x_ned * Decimal(math.cos(AZIMUTH_INIT)) + y_ned * Decimal(math.sin(AZIMUTH_INIT))
+    # odom_msg.pose.pose.position.y = -x_ned * Decimal(math.sin(AZIMUTH_INIT)) + y_ned * Decimal(math.cos(AZIMUTH_INIT))
 
     # odom_msg.pose.pose.position.z = - data.param_values[37]
     odom_msg.pose.pose.position.z = 0
+
     enu_quaternion = (
         data.param_values[14], # 40 q1 (alg)
         data.param_values[15], # 41 q2 (alg)
@@ -144,14 +150,20 @@ def odom_callback(data):
     # ned_roll = enu_pitch
     # ned_pitch = enu_roll
     ned_yaw = -enu_yaw
+    # ned_yaw = -enu_yaw - (AZIMUTH_INIT)
 
     ned_q = quaternion_from_euler(ned_roll, ned_pitch, ned_yaw)
     if ned_q[0] == 0 and ned_q[1] == 0 and ned_q[2] == 0 and ned_q[3] == 1:
         return
-    
-    tf_broadcaster = tf.TransformBroadcaster()
-    tf_broadcaster.sendTransform((x, y, 0.0), (ned_q[0], ned_q[1], ned_q[2], ned_q[3]), rospy.Time.now(), "base_footprint", "odom")
-    pub.publish(pose_stamped)
+    # broadcast tf odom->base_footprint
+    # tf_broadcaster = tf.TransformBroadcaster()
+    # tf_broadcaster.sendTransform(
+    #     (x, y, 0.0),
+    #     (ned_q[0], ned_q[1], ned_q[2], ned_q[3]),
+    #     rospy.Time.now(),
+    #     "base_footprint",
+    #     "odom"
+    # )
     
     if not is_ready:
         rospy.loginfo("GKV is ready!")
@@ -202,7 +214,7 @@ def listener():
     pub_navsat = rospy.Publisher('gkv/navsat/fix', NavSatFix, queue_size=10)
     pub_imu = rospy.Publisher('gkv/imu', Imu, queue_size=10)
     pub_odom = rospy.Publisher('gkv/odom', Odometry, queue_size=10)
-    pub = rospy.Publisher('/gps_transformation', PoseStamped, queue_size=10)
+    # pub = rospy.Publisher('/gps_transformation', PoseStamped, queue_size=10)
 
     rospy.Timer(rospy.Duration(0.1), publish_navsat) # 10 Гц
     rospy.Timer(rospy.Duration(0.01), publish_imu) # 100 Гц
